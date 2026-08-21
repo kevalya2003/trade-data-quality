@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tradedq"
+version = "0.1.0"
+description = "Data quality validation and quarantine for the trade pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+# Airflow is deliberately not a dependency. The validation logic is a library that
+# happens to be scheduled by Airflow; keeping the dependency one-way means the whole
+# thing can be tested with pytest in two seconds instead of by standing up a
+# scheduler, and it could be moved to any other orchestrator without a rewrite.
+dependencies = [
+    "great_expectations>=1.0,<2.0",
+    "SQLAlchemy>=2.0,<3.0",
+    "psycopg[binary]>=3.1",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+tradedq = "tradedq.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

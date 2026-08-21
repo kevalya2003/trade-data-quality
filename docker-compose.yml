@@ -1,0 +1,59 @@
+name: tradedq
+
+# This stack is self-contained: it brings up its own PostgreSQL and the DAG generates
+# the feed it validates, so `docker compose up` reproduces the whole thing without
+# needing the pipeline project to be running first. The host port differs from the
+# pipeline project's so both can be up at once.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tradedq-postgres
+    environment:
+      POSTGRES_USER: trades
+      POSTGRES_PASSWORD: trades
+      POSTGRES_DB: trades
+    ports:
+      - "55433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-airflow-db.sql:/docker-entrypoint-initdb.d/10-airflow.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trades -d trades"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  airflow:
+    build:
+      context: ..
+      dockerfile: trade-data-quality/Dockerfile
+    container_name: tradedq-airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://trades:trades@postgres:5432/airflow
+      # Standalone generates a random admin password on first boot and prints it to the
+      # log. Pinning it keeps the README instructions honest.
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      TRADEDQ_DATABASE_URL: postgresql+psycopg://trades:trades@postgres:5432/trades
+      TRADEPNL_DATABASE_URL: postgresql+psycopg://trades:trades@postgres:5432/trades
+      TRADEDQ_GX_ROOT: /opt/airflow/gx-project
+    volumes:
+      - ./dags:/opt/airflow/dags:ro
+      - airflow-logs:/opt/airflow/logs
+      - gx-project:/opt/airflow/gx-project
+    ports:
+      # 8080 is the Airflow default but is very often already taken on a developer
+      # machine, so the host side is moved out of the way.
+      - "18080:8080"
+    command: standalone
+
+volumes:
+  pgdata:
+  airflow-logs:
+  gx-project:

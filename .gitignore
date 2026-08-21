@@ -1,0 +1,19 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.env
+
+# Great Expectations writes its project directory here at runtime. The rules live in
+# rules.py, not in generated YAML, so there is nothing here worth committing.
+gx/
+
+# Data docs are a build artefact. The two screenshots under docs/ are committed
+# deliberately, so the README can show the output without a reader running anything.
+docs/data-docs/
+logs/

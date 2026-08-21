@@ -1,0 +1,16 @@
+# BuildKit reads <dockerfile>.dockerignore in preference to a context-root
+# .dockerignore, which lets this project keep its build configuration to itself even
+# though the build context is the parent directory.
+**/.venv
+**/venv
+**/.git
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+**/.pytest_cache
+**/.ruff_cache
+**/build
+**/dist
+**/data
+**/gx
+**/logs
